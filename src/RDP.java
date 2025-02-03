@@ -5,7 +5,9 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
     String inp;
     int pos = 0;  // Position in the input string
     String[] tokens; // Tokens to be parsed
-
+    boolean isRejected = false;
+    StringBuilder outputBuffer = new StringBuilder(); 
+    
     public static void main(String[] args) throws IOException {
         RDP rdp = new RDP();
         rdp.parse();
@@ -19,11 +21,22 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
             tokens = input.split("\\s+"); // Split the input into tokens
             inp = tokens[pos]; // Set the first token
             //System.out.println("Starting parse...");
+            
             Expr(); // Start parsing with Expr
-            if (inp.equals("↵")) {
-                accept(); // End of string marker
+            
+            if(!isRejected) {
+                if (inp.equals("↵")) {
+                    accept(); // End of string marker
+                } else {
+                    reject(); // Reject if end marker is not found
+                }
+            }
+
+            // Print only the final result
+            if (isRejected) {
+                System.out.println("Reject");
             } else {
-                reject(); // Reject if end marker is not found
+                System.out.print(outputBuffer.toString()); // Print stored outputs
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,7 +56,7 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
         if (inp.equals("+")) { // Handle addition
             inp = getInp();
             Term(); // Parse the next term after "+"
-            System.out.println("ADD");
+            if (!isRejected) outputBuffer.append("ADD\n");
             Elist(); // Continue parsing more terms or end
         } else {
             // Epsilon transition (nothing happens), end of Elist
@@ -64,7 +77,7 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
         if (inp.equals("*")) { // Handle multiplication
             inp = getInp();
             Factor(); // Parse the next factor after "*"
-            System.out.println("MUL");
+            if (!isRejected) outputBuffer.append("MUL\n");
             Tlist(); // Continue parsing more multiplication or end
         } else {
             // Epsilon transition (nothing happens), end of Tlist
@@ -85,7 +98,7 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
             }
         } else if (inp.equals("var")) { // Handle variable (var)
             inp = getInp();
-            System.out.println("PRINT");
+            if (!isRejected) outputBuffer.append("PRINT\n");
         } else {
             reject(); // Reject if neither a '(' nor 'var' is encountered
         }
@@ -93,13 +106,12 @@ class RDP { // Recursive Descent Parser (Pushdown Machine)
 
     // Accept input
     void accept() {
-        System.out.println("accept"); // Parsing successful
+    	if (!isRejected) outputBuffer.append("Accept\n");
     }
 
     // Reject input
     void reject() {
-        System.out.println("reject"); // Parsing failed
-        System.exit(0); // Terminate the parser
+    	isRejected = true;
     }
 
     // Get the next input token
